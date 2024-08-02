@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>播放列表转换</title>
+    <style>
+        #main {
+            width: 1310px;
+            height: 900px;
+            border: #000 solid 1px;
+        }
+        textarea {
+            float: left;
+            width: 1200px;
+            height: 100%;
+            resize:none;
+        }
+        #ButtonBox {
+            position: relative;
+            float: left;
+            width: 100px;
+            height: 100%;
+            text-align:center;
+        }
+        #ButtonBox select
+        {
+            width:100%;
+            text-align:center;
+        }
+    </style>
+    <script>
+        var TheJson;
+        function CreatePlayList(ChannelList, CastType) {
+            console.log(ChannelList);
+            var PlayList = "";
+            for (var i = 0; i < ChannelList.length; i++) {
+                PlayList += '#EXTINF:-1,group-title ="'+ChannelList[i].category_name+'",tvg-logo ="' +ChannelList[i].fileurl+'",' + ChannelList[i].name +'\r\n';
+                if (CastType == "Unicast") {
+                    PlayList += ChannelList[i].zx +"\r\n";
+                }
+                else if (CastType == "Multicast") {
+                    PlayList += ChannelList[i].multi_ZX + "\r\n";
+                }
+            }
+            var Texts = new Array();
+            Texts[0] = PlayList;
+            return Texts;
+        }
+        function SelectCastType(TheSelect) {
+            if (TheSelect.value != "CastType") {
+                var SelectCategory = document.getElementById("SelectCategory");
+                SelectCategory.innerHTML = "";
+                var option = document.createElement("option");
+                option.value = "Category";
+                option.innerText = "类别";
+                SelectCategory.append(option);
+                SelectCategory.disabled = false;
+                for (var i = 0; i < TheJson.length; i++) {
+                    var option = document.createElement("option");
+                    option.value = TheJson[i].category_id;
+                    option.innerText = TheJson[i].category_name;
+                    SelectCategory.append(option);
+                }
+                SelectCategory.onchange = function () {
+                    if (this.value != "Category") {
+                        var LinkBox = document.getElementById("LinkBox");
+                        LinkBox.innerHTML = "";
+                        for (var i = 0; i < TheJson.length; i++) {
+                            if (TheJson[i].category_id == SelectCategory.value) {
+                                var FileName = TheJson[i].category_name + "-" + (TheSelect.value == "Multicast" ? "组播" : "单播") + ".m3u8";
+                                var Playlist = CreatePlayList(TheJson[i].channelList, TheSelect.value);
+                                var PlayListFile = new File(Playlist, FileName, { type: "text/play" });
+                                let DownLink = document.createElement("a");
+                                DownLink.innerText = "点击下载";
+                                DownLink.setAttribute("download", FileName);
+                                DownLink.href = URL.createObjectURL(PlayListFile);
+                                LinkBox.appendChild(DownLink);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        function JsonStrInput(TextBox) {
+            try {
+                TheJson = JSON.parse(TextBox.value);
+                document.getElementById("SelectCast").disabled = false;
+            }
+            catch
+            {
+                alert("Json地址不合法，请重新输入")
+                TextBox.value = "";
+
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="main">
+        <textarea onchange="JsonStrInput(this)" placeholder="粘贴此处"></textarea>
+        <div id="ButtonBox">
+            <select id="SelectCast" disabled onchange="SelectCastType(this)">
+                <option value="CastType">类型</option>
+                <option value="Multicast">组播</option>
+                <option value="Unicast">单播</option>
+            </select>
+            <select id="SelectCategory" disabled>
+                <option value="Category">类别</option>
+            </select>
+            <div id="LinkBox"></div>
+        </div>
+    </div>
+</body>
+</html> 作者：熊大你又骗俺 https://www.bilibili.com/read/cv18853590 出处：bilibili
